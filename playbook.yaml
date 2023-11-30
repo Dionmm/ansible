@@ -4,10 +4,19 @@
   tasks:
     - name: Another way to call known_hosts
       ansible.builtin.known_hosts:
-        name: {{ inventory_hostname }}
+        name: 51.20.114.23
         key: 51.20.114.23 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFlMCrhfL9gVMCWxMKn+5tKbWBlL0YfXIX/lfLcoLa7W
         path: /etc/ssh/ssh_known_hosts
         state: present
+    - name: Check known_hosts for {{ inventory_hostname }}
+      local_action: shell ssh-keygen -F {{ inventory_hostname }}
+      register: has_entry_in_known_hosts_file
+      changed_when: false
+      ignore_errors: true
+    - name: Ignore host key for {{ inventory_hostname }} on first run
+      when: has_entry_in_known_hosts_file.rc == 1
+      set_fact:
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
     - name: Delayed gathering of facts
       setup:
     - name: Ping my hosts
